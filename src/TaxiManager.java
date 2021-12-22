@@ -1,7 +1,7 @@
-import dao.DriversDao;
-import dao.AccessToPassengersDB;
-import dao.AccessToTripDB;
-import dao.AccessToVehicleDB;
+import dao.DriverDao;
+import dao.PassengerDao;
+import dao.TripDao;
+import dao.VehicleDao;
 import enumerations.*;
 import exceptions.UserInputValidation;
 import models.members.Driver;
@@ -20,10 +20,10 @@ import java.util.regex.Pattern;
  */
 public class TaxiManager {
     Scanner scanner = new Scanner(System.in);
-    AccessToPassengersDB accessToPassengersDB = new AccessToPassengersDB();
-    DriversDao accessToDriversDB = new DriversDao();
-    AccessToVehicleDB accessToVehicleDB = new AccessToVehicleDB();
-    AccessToTripDB accessToTripDB = new AccessToTripDB();
+    PassengerDao passengerDao = new PassengerDao();
+    DriverDao driverDao = new DriverDao();
+    VehicleDao vehicleDao = new VehicleDao();
+    TripDao tripDao = new TripDao();
     private String fName, lName, personalId, phoneNum;
     private int birthYear;
     Gender gender;
@@ -47,7 +47,7 @@ public class TaxiManager {
         for (int i = 0; i < count; i++) {
             System.out.println("** information for new driver **");
             getCommonInformationInputs();
-            if (accessToDriversDB.isObjectFound("drivers", "personal_id", personalId)) {
+            if (driverDao.isObjectFound(personalId)) {
                 System.out.println("you can't register, there is a driver with this personal id!");
                 return;
             }
@@ -66,6 +66,7 @@ public class TaxiManager {
                 }
             } while (true);
 
+            Vehicle vehicle;
             String vehiclePlaque;
             while (true) {
                 try {
@@ -93,11 +94,12 @@ public class TaxiManager {
                 String name = scanner.nextLine();
                 System.out.print("vehicle color: ");
                 String color = scanner.nextLine();
-                vehicleId = createVehicleAndReturnId(name, color, vehiclePlaque, typeOfVehicle);
+                vehicle = createVehicleAndReturn(name, color, vehiclePlaque, typeOfVehicle);
+                vehicleId = vehicle.getId();
             }
-            drivers[i] = new Driver(personalId, fName, lName, gender, phoneNum, birthYear, typeOfVehicle, vehicleId, location);
-            addedSuc += accessToDriversDB.addNewDriver(drivers[i]);
-            drivers[i].setId(accessToDriversDB.getId("drivers", "personal_id", personalId));
+            drivers[i] = new Driver(personalId, fName, lName, gender, phoneNum, birthYear, typeOfVehicle, vehicle, location);
+            addedSuc += driverDao.addNewDriver(drivers[i]);
+            drivers[i].setId(driverDao.getId(personalId));
             System.out.println("id: " + drivers[i].getId());
         }
         if (addedSuc == count)
@@ -129,15 +131,15 @@ public class TaxiManager {
         return typeOfVehicle;
     }
 
-    private int createVehicleAndReturnId(String name, String color, String plaque, TypeOfVehicle typeOfVehicle) throws SQLException {
+    private Vehicle createVehicleAndReturn(String name, String color, String plaque, TypeOfVehicle typeOfVehicle) throws SQLException {
         Vehicle vehicle = new Vehicle(name, color, plaque, typeOfVehicle);
-        accessToVehicleDB.addNewVehicle(vehicle);
-        vehicle.setId(accessToVehicleDB.getId("vehicles", "plaque", plaque));
-        return vehicle.getId();
+        vehicleDao.addNewVehicle(vehicle);
+        vehicle.setId(vehicleDao.getId(plaque));
+        return vehicle;
     }
 
     private boolean isVehiclePlaqueExists(String vehiclePlaque) throws SQLException {
-        return accessToDriversDB.isObjectFound("vehicles", "plaque", vehiclePlaque);
+        return vehicleDao.isObjectFound(vehiclePlaque);
     }
 
     public void createPassenger(int caseNum) throws SQLException, InterruptedException {
@@ -154,7 +156,7 @@ public class TaxiManager {
         for (int i = 0; i < count; i++) {
             System.out.println("** information for new passenger **");
             getCommonInformationInputs();
-            if (accessToPassengersDB.isObjectFound("passengers", "personal_id", personalId)) {
+            if (passengerDao.isObjectFound(personalId)) {
                 System.out.println("you can't register, there is a driver with this personal id!");
                 return;
             }
@@ -162,8 +164,8 @@ public class TaxiManager {
             System.out.print("account balance: ");
             double accountBalance = scanner.nextDouble();
             passengers[i] = new Passenger(personalId, fName, lName, gender, phoneNum, birthYear, accountBalance);
-            addedSuc += accessToPassengersDB.addNewPassenger(passengers[i]);
-            passengers[i].setId(accessToPassengersDB.getId("passengers", "personal_id", personalId));
+            addedSuc += passengerDao.addNewPassenger(passengers[i]);
+            passengers[i].setId(passengerDao.getId(personalId));
             System.out.println("id: " + passengers[i].getId());
         }
         if (addedSuc == count)
@@ -232,18 +234,20 @@ public class TaxiManager {
     }
 
     public void showAllPassengers() throws SQLException {
-        accessToPassengersDB.showAllObjectsInDB();
+        List<Passenger> passengers = passengerDao.showAllPassengers();
+        passengers.forEach(System.out::println);
     }
 
     public void showAllDrivers() throws SQLException {
-        accessToDriversDB.showAllObjectsInDB();
+        List<Driver> drivers = driverDao.showAllDrivers();
+        drivers.forEach(System.out::println);
     }
 
     public void signupOrLogin(int caseNum) throws SQLException, InterruptedException {
         System.out.print("enter your Personal Id: ");
         String inputPersonalId = scanner.nextLine();
         if (caseNum == 3) {
-            User driver = accessToDriversDB.returnUserIfExists("drivers", "personal_id", inputPersonalId);
+            User driver = driverDao.returnDriverByPersonalCode(inputPersonalId);
             if (driver == null)
                 registerOrExit("d");
             else {
@@ -261,7 +265,7 @@ public class TaxiManager {
             }
 
         } else if (caseNum == 4) {
-            User passenger = accessToPassengersDB.returnUserIfExists("passengers", "personal_id", inputPersonalId);
+            User passenger = passengerDao.returnPassengerByPersonalCode(inputPersonalId);
             if (passenger == null)
                 registerOrExit("p");
             else {
@@ -283,11 +287,11 @@ public class TaxiManager {
     }*/
 
     public void showAllOngoingTravels() throws SQLException {
-        List<Trip> allTrips = accessToTripDB.showAllTrips();
+        List<Trip> allTrips = tripDao.showAllTrips();
         for (Trip trip : allTrips) {
             if (trip.getTripStatus().equals(TripStatus.ON_TRIP)) {
-                Passenger passenger = (Passenger) accessToPassengersDB.returnUserById("passengers", trip.getPassengerId());
-                Driver driver = (Driver) accessToDriversDB.returnUserById("drivers", trip.getDriverId());
+                Passenger passenger = (Passenger) passengerDao.returnPassengerById(trip.getPassenger().getId());
+                Driver driver = (Driver) driverDao.returnDriverById(trip.getDriver().getId());
                 System.out.println("information about trip:");
                 System.out.println(passenger.toString());
                 System.out.println(driver.toString());
@@ -303,7 +307,7 @@ public class TaxiManager {
         switch (chosenOption) {
             case 1:
                 driver.setUserStatus(UserStatus.WAITING);
-                accessToDriversDB.updateStatus(driver, driver.getUserStatus());
+                driverDao.updateStatus(driver, driver.getUserStatus());
                 break;
             case 2:
                 break;
@@ -315,7 +319,7 @@ public class TaxiManager {
     public void showOptionsForDriverWhileTraveling(Driver driver) throws SQLException {
         boolean confirmCashReceipt = false;
         int chosenOption;
-        Trip driverTrip = accessToTripDB.findTripByDriverId(driver.getId());
+        Trip driverTrip = tripDao.findTripByDriverId(driver.getId());
         PaymentMethod paymentMethod;
         try {
             paymentMethod = driverTrip.getPaymentMethod();
@@ -340,12 +344,12 @@ public class TaxiManager {
                         System.out.println("you must confirm cash receipt, then you can finished the trip");
                         continue;
                     } else {
-                        Passenger passenger = (Passenger) accessToPassengersDB.returnUserById("passengers", driverTrip.getPassengerId());
-                        accessToPassengersDB.updateStatus(passenger, UserStatus.NO_REQUEST);
-                        accessToTripDB.updateStatus(driverTrip, TripStatus.FINISHED);
+                        Passenger passenger = (Passenger) passengerDao.returnPassengerById(driverTrip.getPassenger().getId());
+                        passengerDao.updateStatus(passenger, UserStatus.NO_REQUEST);
+                        tripDao.updateStatus(driverTrip, TripStatus.FINISHED);
 
-                        accessToDriversDB.updateStatus(driver, UserStatus.NO_REQUEST);
-                        accessToDriversDB.updateDriverLocation(driver, driverTrip.getDestination());
+                        driverDao.updateStatus(driver, UserStatus.NO_REQUEST);
+                        driverDao.updateDriverLocation(driver, driverTrip.getDestination());
                         System.out.println("your trip has ended... have a good time");
 
                     }
@@ -400,23 +404,23 @@ public class TaxiManager {
                 } else
                     paymentMethod = PaymentMethod.CASH;
 
-                Trip trip = new Trip(passenger.getId(), origin, destination, cost, paymentMethod);
+                Trip trip = new Trip(passenger, origin, destination, cost, paymentMethod);
                 System.out.println("wait until driver accept....");
                 Thread.sleep(3000);
                 Driver accDriver = findNearestDriverByPersonalId();
-                trip.setDriverId(accDriver.getId());
+                trip.setDriver(accDriver);
                 System.out.println("your request is accepted by: " + accDriver.getFirstName() + " " + accDriver.getLastName());
 
-                accessToDriversDB.updateStatus(accDriver, UserStatus.ON_TRIP);
-                accessToPassengersDB.updateStatus(passenger, UserStatus.ON_TRIP);
-                accessToTripDB.addNewTrip(trip);
+                driverDao.updateStatus(accDriver, UserStatus.ON_TRIP);
+                passengerDao.updateStatus(passenger, UserStatus.ON_TRIP);
+                tripDao.addNewTrip(trip);
                 break;
 
             } else if (answer == 3) {
                 System.out.print("enter amount to increase: ");
                 double amount = scanner.nextDouble();
                 double newAccountBalance = passenger.increaseAccountBalance(amount);
-                accessToPassengersDB.updateAccountBalance(newAccountBalance, passenger.getId());
+                passengerDao.updateAccountBalance(newAccountBalance, passenger.getId());
                 break;
 
             } else if (answer == 4)
@@ -454,7 +458,7 @@ public class TaxiManager {
     }
 
     public Driver findNearestDriverByPersonalId() throws SQLException {
-        List<String> locations = accessToDriversDB.findLocationOfWaitingStatus();
+        List<String> locations = driverDao.findLocationOfWaitingStatus();
         int min = Integer.MAX_VALUE;
         String dLocation = null;
         for (String location : locations) {
@@ -464,7 +468,6 @@ public class TaxiManager {
                 dLocation = location;
             }
         }
-        User driver = accessToDriversDB.returnUserIfExists("drivers", "location", dLocation);
-        return (Driver) driver;
+        return driverDao.returnDriverByLocation(dLocation);
     }
 }

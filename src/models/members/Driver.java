@@ -25,9 +25,9 @@ public class Driver extends User {
     private TypeOfVehicle typeOfVehicle;
     private String location;
 
-    public Driver(String personalId, String firstName, String lastName, Gender gender, String phoneNumber, int birthYear, TypeOfVehicle typeOfVehicle, int vehicleId, String location) {
+    public Driver(String personalId, String firstName, String lastName, Gender gender, String phoneNumber, int birthYear, TypeOfVehicle typeOfVehicle, Vehicle vehicle, String location) {
         super(personalId, firstName, lastName, gender, phoneNumber, birthYear);
-        this.vehicleId = vehicleId;
+        this.vehicle = vehicle;
         this.typeOfVehicle = typeOfVehicle;
         this.location = location;
     }
@@ -36,7 +36,7 @@ public class Driver extends User {
     public String toString() {
         return "Drivers{" +
                 super.toString() + '\'' +
-                ", vehicleId=" + vehicleId +
+                ", vehicleId=" + vehicle +
                 ", typeOfVehicle=" + typeOfVehicle.toString().toLowerCase() +
                 ", location=" + location +
                 '}';
