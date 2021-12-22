@@ -1,11 +1,10 @@
-import java.sql.SQLException;
 import java.util.Scanner;
 
 /**
  * @author Negin Mousavi
  */
 public class Main {
-    public static void main(String[] args) throws SQLException, ClassNotFoundException, InterruptedException {
+    public static void main(String[] args) throws InterruptedException {
         Scanner scanner = new Scanner(System.in);
         TaxiManager taxiManager = new TaxiManager();
         welcome();

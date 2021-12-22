@@ -3,6 +3,7 @@ package models.trip;
 import enumerations.PaymentMethod;
 import enumerations.TripStatus;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import models.members.Driver;
 import models.members.Passenger;
 
@@ -14,9 +15,10 @@ import javax.persistence.*;
 
 @Data
 @Entity
+@NoArgsConstructor
 public class Trip {
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     @OneToOne
     private Driver driver;
@@ -37,21 +39,6 @@ public class Trip {
         this.cost = cost;
         this.paymentMethod = paymentMethod;
         this.tripStatus = TripStatus.ON_TRIP;
-    }
-
-    public Trip(int id, Driver driver, Passenger passenger, String origin, String destination, double cost, PaymentMethod paymentMethod, TripStatus tripStatus) {
-        this.id = id;
-        this.driver = driver;
-        this.passenger = passenger;
-        this.origin = origin;
-        this.destination = destination;
-        this.cost = cost;
-        this.paymentMethod = paymentMethod;
-        this.tripStatus = tripStatus;
-    }
-
-    public Trip() {
-
     }
 
     @Override

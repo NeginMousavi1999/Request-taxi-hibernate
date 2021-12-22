@@ -6,11 +6,9 @@ import enumerations.*;
 import exceptions.UserInputValidation;
 import models.members.Driver;
 import models.members.Passenger;
-import models.members.User;
 import models.trip.Trip;
 import models.vehicles.Vehicle;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Pattern;
@@ -24,16 +22,25 @@ public class TaxiManager {
     DriverDao driverDao = new DriverDao();
     VehicleDao vehicleDao = new VehicleDao();
     TripDao tripDao = new TripDao();
-    private String fName, lName, personalId, phoneNum;
-    private int birthYear;
     Gender gender;
     PaymentMethod paymentMethod;
     String origin, destination;
+    private String fName, lName, personalId, phoneNum;
+    private int birthYear;
 
-    public TaxiManager() throws SQLException, ClassNotFoundException {
+    public static void handleExceptionForMobileNumFormat(String input) {
+        String regex = "09[0-9]{9}";
+        if (!Pattern.matches(regex, input))
+            throw new UserInputValidation("some thing is not correct about this phone number");
     }
 
-    public void createDriver(int caseNum) throws SQLException, InterruptedException {
+    public static void handleExceptionForPlaqueFormat(String input) {
+        String regex = "[0-9]{2}[a-z][0-9]{2}";
+        if (!Pattern.matches(regex, input))
+            throw new UserInputValidation("the format of plaque must be like: 99x99");
+    }
+
+    public void createDriver(int caseNum) throws InterruptedException {
         int count = 0;
         int addedSuc = 0;
         if (caseNum == 3)
@@ -81,7 +88,6 @@ public class TaxiManager {
             }
 
             TypeOfVehicle typeOfVehicle;
-            int vehicleId;
             if (isVehiclePlaqueExists(vehiclePlaque)) {
                 System.out.println("you can choose this vehicle plaque because it is exits already...");
                 return;
@@ -95,7 +101,6 @@ public class TaxiManager {
                 System.out.print("vehicle color: ");
                 String color = scanner.nextLine();
                 vehicle = createVehicleAndReturn(name, color, vehiclePlaque, typeOfVehicle);
-                vehicleId = vehicle.getId();
             }
             drivers[i] = new Driver(personalId, fName, lName, gender, phoneNum, birthYear, typeOfVehicle, vehicle, location);
             addedSuc += driverDao.addNewDriver(drivers[i]);
@@ -131,18 +136,18 @@ public class TaxiManager {
         return typeOfVehicle;
     }
 
-    private Vehicle createVehicleAndReturn(String name, String color, String plaque, TypeOfVehicle typeOfVehicle) throws SQLException {
+    private Vehicle createVehicleAndReturn(String name, String color, String plaque, TypeOfVehicle typeOfVehicle) {
         Vehicle vehicle = new Vehicle(name, color, plaque, typeOfVehicle);
         vehicleDao.addNewVehicle(vehicle);
         vehicle.setId(vehicleDao.getId(plaque));
         return vehicle;
     }
 
-    private boolean isVehiclePlaqueExists(String vehiclePlaque) throws SQLException {
+    private boolean isVehiclePlaqueExists(String vehiclePlaque) {
         return vehicleDao.isObjectFound(vehiclePlaque);
     }
 
-    public void createPassenger(int caseNum) throws SQLException, InterruptedException {
+    public void createPassenger(int caseNum) throws InterruptedException {
         int count = 0;
         int addedSuc = 0;
         if (caseNum == 4) {
@@ -221,33 +226,21 @@ public class TaxiManager {
         }
     }
 
-    public static void handleExceptionForMobileNumFormat(String input) {
-        String regex = "09[0-9]{9}";
-        if (!Pattern.matches(regex, input))
-            throw new UserInputValidation("some thing is not correct about this phone number");
-    }
-
-    public static void handleExceptionForPlaqueFormat(String input) {
-        String regex = "[0-9]{2}[a-z][0-9]{2}";
-        if (!Pattern.matches(regex, input))
-            throw new UserInputValidation("the format of plaque must be like: 99x99");
-    }
-
-    public void showAllPassengers() throws SQLException {
+    public void showAllPassengers() {
         List<Passenger> passengers = passengerDao.showAllPassengers();
         passengers.forEach(System.out::println);
     }
 
-    public void showAllDrivers() throws SQLException {
+    public void showAllDrivers() {
         List<Driver> drivers = driverDao.showAllDrivers();
         drivers.forEach(System.out::println);
     }
 
-    public void signupOrLogin(int caseNum) throws SQLException, InterruptedException {
+    public void signupOrLogin(int caseNum) throws InterruptedException {
         System.out.print("enter your Personal Id: ");
         String inputPersonalId = scanner.nextLine();
         if (caseNum == 3) {
-            User driver = driverDao.returnDriverByPersonalCode(inputPersonalId);
+            Driver driver = driverDao.returnDriverByPersonalCode(inputPersonalId);
             if (driver == null)
                 registerOrExit("d");
             else {
@@ -256,42 +249,37 @@ public class TaxiManager {
                 if (status.equals(UserStatus.WAITING.toString()))
                     System.out.println("and waiting for the trip");
                 else if (status.equals(UserStatus.NO_REQUEST.toString())) {
-                    showOptionsForDriverWithNoRequest((Driver) driver);
+                    showOptionsForDriverWithNoRequest(driver);
                     scanner.nextLine();
 
                 } else if (status.equals(UserStatus.ON_TRIP.toString())) {
-                    showOptionsForDriverWhileTraveling((Driver) driver);
+                    showOptionsForDriverWhileTraveling(driver);
                 }
             }
 
         } else if (caseNum == 4) {
-            User passenger = passengerDao.returnPassengerByPersonalCode(inputPersonalId);
+            Passenger passenger = passengerDao.returnPassengerByPersonalCode(inputPersonalId);
             if (passenger == null)
                 registerOrExit("p");
             else {
                 String status = passenger.getUserStatus().toString();
                 if (status.equals(UserStatus.NO_REQUEST.toString()))
-                    showPassengerLoginMenu((Passenger) passenger);
+                    showPassengerLoginMenu(passenger);
                 else if (status.equals(UserStatus.WAITING.toString()))
                     System.out.println("and waiting for acceptation");
                 else if (status.equals(UserStatus.ON_TRIP.toString())) {
-                    System.out.println("you are on a trip");//TODO show trip
-//                    showTripDetailsForSpecificPassenger((Passenger) passenger);
+                    System.out.println("you are on a trip");
                 }
             }
         }
     }
 
-/*    public void showTripDetailsForSpecificPassenger(Passenger passenger) {
-
-    }*/
-
-    public void showAllOngoingTravels() throws SQLException {
+    public void showAllOngoingTravels() {
         List<Trip> allTrips = tripDao.showAllTrips();
         for (Trip trip : allTrips) {
             if (trip.getTripStatus().equals(TripStatus.ON_TRIP)) {
-                Passenger passenger = (Passenger) passengerDao.returnPassengerById(trip.getPassenger().getId());
-                Driver driver = (Driver) driverDao.returnDriverById(trip.getDriver().getId());
+                Passenger passenger = passengerDao.returnPassengerById(trip.getPassenger().getId());
+                Driver driver = driverDao.returnDriverById(trip.getDriver().getId());
                 System.out.println("information about trip:");
                 System.out.println(passenger.toString());
                 System.out.println(driver.toString());
@@ -301,13 +289,13 @@ public class TaxiManager {
         }
     }
 
-    public void showOptionsForDriverWithNoRequest(Driver driver) throws SQLException {
+    public void showOptionsForDriverWithNoRequest(Driver driver) {
         System.out.print("1.accept a trip\n2.Exit\nwhat do you wanna do? : ");
         int chosenOption = scanner.nextInt();
         switch (chosenOption) {
             case 1:
                 driver.setUserStatus(UserStatus.WAITING);
-                driverDao.updateStatus(driver, driver.getUserStatus());
+                driverDao.update(driver);
                 break;
             case 2:
                 break;
@@ -316,7 +304,7 @@ public class TaxiManager {
         }
     }
 
-    public void showOptionsForDriverWhileTraveling(Driver driver) throws SQLException {
+    public void showOptionsForDriverWhileTraveling(Driver driver) {
         boolean confirmCashReceipt = false;
         int chosenOption;
         Trip driverTrip = tripDao.findTripByDriverId(driver.getId());
@@ -344,12 +332,13 @@ public class TaxiManager {
                         System.out.println("you must confirm cash receipt, then you can finished the trip");
                         continue;
                     } else {
-                        Passenger passenger = (Passenger) passengerDao.returnPassengerById(driverTrip.getPassenger().getId());
-                        passengerDao.updateStatus(passenger, UserStatus.NO_REQUEST);
+                        Passenger passenger = passengerDao.returnPassengerById(driverTrip.getPassenger().getId());
+                        passenger.setUserStatus(UserStatus.NO_REQUEST);
+                        passengerDao.update(passenger);
                         tripDao.updateStatus(driverTrip, TripStatus.FINISHED);
-
-                        driverDao.updateStatus(driver, UserStatus.NO_REQUEST);
-                        driverDao.updateDriverLocation(driver, driverTrip.getDestination());
+                        driver.setUserStatus(UserStatus.NO_REQUEST);
+                        driverDao.update(driver);
+                        driverDao.update(driver);
                         System.out.println("your trip has ended... have a good time");
 
                     }
@@ -363,7 +352,7 @@ public class TaxiManager {
         } while (chosenOption != 3);
     }
 
-    public void registerOrExit(String userType) throws SQLException, InterruptedException {
+    public void registerOrExit(String userType) throws InterruptedException {
         System.out.print("1)register\n2)exit\nwhat do you wanna do? : ");
         int answer = scanner.nextInt();
         switch (answer) {
@@ -381,7 +370,7 @@ public class TaxiManager {
         }
     }
 
-    public void showPassengerLoginMenu(Passenger passenger) throws SQLException, InterruptedException {
+    public void showPassengerLoginMenu(Passenger passenger) throws InterruptedException {
         while (true) {
             System.out.print("you are authenticate\n1)Travel request (cash payment)\n2.Travel request (payment from account balance)\n" +
                     "3.Increase account balance\n4)Exit\nwhat do you wanna do? : ");
@@ -411,8 +400,10 @@ public class TaxiManager {
                 trip.setDriver(accDriver);
                 System.out.println("your request is accepted by: " + accDriver.getFirstName() + " " + accDriver.getLastName());
 
-                driverDao.updateStatus(accDriver, UserStatus.ON_TRIP);
-                passengerDao.updateStatus(passenger, UserStatus.ON_TRIP);
+                accDriver.setUserStatus(UserStatus.ON_TRIP);
+                driverDao.update(accDriver);
+                passenger.setUserStatus(UserStatus.ON_TRIP);
+                passengerDao.update(passenger);
                 tripDao.addNewTrip(trip);
                 break;
 
@@ -420,7 +411,8 @@ public class TaxiManager {
                 System.out.print("enter amount to increase: ");
                 double amount = scanner.nextDouble();
                 double newAccountBalance = passenger.increaseAccountBalance(amount);
-                passengerDao.updateAccountBalance(newAccountBalance, passenger.getId());
+                passenger.setAccountBalance(newAccountBalance);
+                passengerDao.update(passenger);
                 break;
 
             } else if (answer == 4)
@@ -457,7 +449,7 @@ public class TaxiManager {
         return space;
     }
 
-    public Driver findNearestDriverByPersonalId() throws SQLException {
+    public Driver findNearestDriverByPersonalId() {
         List<String> locations = driverDao.findLocationOfWaitingStatus();
         int min = Integer.MAX_VALUE;
         String dLocation = null;

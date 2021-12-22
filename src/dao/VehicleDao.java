@@ -5,15 +5,12 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
-import java.sql.SQLException;
 import java.util.List;
 
 /**
  * @author Negin Mousavi
  */
 public class VehicleDao extends AccessToDB {
-    public VehicleDao() throws ClassNotFoundException, SQLException {
-    }
 
     public int getId(String plaque) {
         Session session = sessionFactory.openSession();
