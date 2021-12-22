@@ -3,6 +3,8 @@ package models.trip;
 import enumerations.PaymentMethod;
 import enumerations.TripStatus;
 import lombok.Data;
+import models.members.Driver;
+import models.members.Passenger;
 
 import javax.persistence.*;
 
@@ -12,13 +14,14 @@ import javax.persistence.*;
 
 @Data
 @Entity
-@Table(name = "trip_made_by_hibernate")
 public class Trip {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private int id;
-    private int driverId;
-    private int passengerId;
+    @OneToOne
+    private Driver driver;
+    @OneToOne
+    private Passenger passenger;
     private String origin;
     private String destination;
     private double cost;
@@ -27,8 +30,8 @@ public class Trip {
     @Enumerated(EnumType.STRING)
     private TripStatus tripStatus;
 
-    public Trip(int passengerId, String origin, String destination, double cost, PaymentMethod paymentMethod) {
-        this.passengerId = passengerId;
+    public Trip(Passenger passenger, String origin, String destination, double cost, PaymentMethod paymentMethod) {
+        this.passenger = passenger;
         this.origin = origin;
         this.destination = destination;
         this.cost = cost;
@@ -36,10 +39,10 @@ public class Trip {
         this.tripStatus = TripStatus.ON_TRIP;
     }
 
-    public Trip(int id, int driverId, int passengerId, String origin, String destination, double cost, PaymentMethod paymentMethod, TripStatus tripStatus) {
+    public Trip(int id, Driver driver, Passenger passenger, String origin, String destination, double cost, PaymentMethod paymentMethod, TripStatus tripStatus) {
         this.id = id;
-        this.driverId = driverId;
-        this.passengerId = passengerId;
+        this.driver = driver;
+        this.passenger = passenger;
         this.origin = origin;
         this.destination = destination;
         this.cost = cost;
@@ -55,8 +58,8 @@ public class Trip {
     public String toString() {
         return "Trip{" +
                 "id=" + id +
-                ", driverId=" + driverId +
-                ", passengerId=" + passengerId +
+                ", driverId=" + passenger +
+                ", passengerId=" + driver +
                 ", origin='" + origin + '\'' +
                 ", destination='" + destination + '\'' +
                 ", cost=" + cost +

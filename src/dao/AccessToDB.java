@@ -18,6 +18,20 @@ public abstract class AccessToDB {
         connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/taxi-agency", "root", "123456");
     }
 
+/*    public int getId(String tableName, String columnName, String value) throws SQLException {
+        int id = -1;
+        if (connection != null) {
+            String sql = String.format("SELECT id FROM %s WHERE %s = ?;", tableName, columnName);
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, value);
+
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next())
+                id = resultSet.getInt("id");
+        }
+        return id;
+    }*/
+
     public int getId(String tableName, String columnName, String value) throws SQLException {
         int id = -1;
         if (connection != null) {

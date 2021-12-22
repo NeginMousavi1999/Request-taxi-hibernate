@@ -2,11 +2,17 @@ package models.members;
 
 import enumerations.Gender;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+
+import javax.persistence.Entity;
 
 /**
  * @author Negin Mousavi
  */
 @Data
+@Entity
+@NoArgsConstructor
 public class Passenger extends User {
     private double accountBalance;
 

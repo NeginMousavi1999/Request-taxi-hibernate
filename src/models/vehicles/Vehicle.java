@@ -2,6 +2,7 @@ package models.vehicles;
 
 import enumerations.TypeOfVehicle;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 
@@ -10,7 +11,7 @@ import javax.persistence.*;
  */
 @Data
 @Entity
-@Table(name = "vehicle_made_by_hibernate")
+@NoArgsConstructor
 public class Vehicle {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,10 +27,6 @@ public class Vehicle {
         this.color = color;
         this.plaque = plaque;
         this.typeOfVehicle = typeOfVehicle;
-    }
-
-    public Vehicle() {
-
     }
 
     @Override

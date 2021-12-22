@@ -5,15 +5,17 @@
 <hibernate-configuration>
     <session-factory>
         <property name="connection.driver_class">com.mysql.jdbc.Driver</property>
-        <property name="connection.url">jdbc:mysql://localhost:3306/taxi-agency</property>
+        <property name="connection.url">jdbc:mysql://localhost:3306/new_taxi_agency</property>
         <property name="connection.username">root</property>
         <property name="connection.password">123456</property>
         <property name="dialect">org.hibernate.dialect.MySQL8Dialect</property>
-        <property name="hbm2ddl.auto">update</property>
+        <property name="hbm2ddl.auto">create</property>
         <property name="connection.pool_size">10</property>
         <property name="show_sql">true</property>
         <property name="format_sql">true</property>
         <mapping class="models.trip.Trip"/>
         <mapping class="models.vehicles.Vehicle"/>
+        <mapping class="models.members.Driver"/>
+        <mapping class="models.members.Passenger"/>
     </session-factory>
 </hibernate-configuration>

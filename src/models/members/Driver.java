@@ -3,14 +3,25 @@ package models.members;
 import enumerations.Gender;
 import enumerations.TypeOfVehicle;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import models.vehicles.Vehicle;
+
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.OneToOne;
 
 
 /**
  * @author Negin Mousavi
  */
 @Data
+@NoArgsConstructor
+@Entity
 public class Driver extends User {
-    private int vehicleId;
+    @OneToOne
+    private Vehicle vehicle;
+    @Enumerated(value = EnumType.STRING)
     private TypeOfVehicle typeOfVehicle;
     private String location;
 
@@ -23,12 +34,11 @@ public class Driver extends User {
 
     @Override
     public String toString() {
-        String s = "Drivers{" +
+        return "Drivers{" +
                 super.toString() + '\'' +
                 ", vehicleId=" + vehicleId +
                 ", typeOfVehicle=" + typeOfVehicle.toString().toLowerCase() +
                 ", location=" + location +
                 '}';
-        return s;
     }
 }
